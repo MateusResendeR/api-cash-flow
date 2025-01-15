@@ -9,6 +9,7 @@ import fastifySwaggerUi from '@fastify/swagger-ui'
 import { routes } from './routes'
 import { app } from './app'
 import { env } from './env'
+import { ZodError } from 'zod'
 
 app.setValidatorCompiler(validatorCompiler)
 app.setSerializerCompiler(serializerCompiler)
@@ -32,6 +33,18 @@ app.register(fastifySwaggerUi, {
 })
 
 app.register(routes);
+
+app.setErrorHandler((error, request, reply) => {
+  if (error instanceof ZodError) {
+    return reply.status(400).send({ message: "Validation error", issues: error.format() });
+  }
+
+  if (env.NODE_ENV !== 'production') {
+    console.error(error);
+  }
+
+  return reply.status(500).send({ message: "Internal server error" });
+})
 
 app.listen({
     host: '0.0.0.0',

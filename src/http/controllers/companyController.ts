@@ -3,8 +3,15 @@ import { Company } from "@prisma/client";
 import { RegisterCompanyUseCase } from "../../use-cases/registerCompany";
 import { PrismaCompaniesRepository } from "../../repositories/prisma/prisma-companies-repository";
 import { CompanyAlreadyExistsError } from "../../use-cases/errors/company-already-exists-error";
+import { createCompanyValidation } from "../../validations/company-validation";
 
 export async function createCompany (request: FastifyRequest, reply: FastifyReply) {
+
+    const validation = createCompanyValidation.safeParse(request.body);
+    if (!validation.success) {
+      return reply.status(400).send({ message: 'Validation error', issues: validation.error.format() });
+    }
+
     const { name, document, balance, status, plan } = request.body as Company;
 
     const balanceNumber = Number(balance);
@@ -17,9 +24,9 @@ export async function createCompany (request: FastifyRequest, reply: FastifyRepl
         if (error instanceof CompanyAlreadyExistsError) {
             return reply.status(409).send({message: error.message});
         }
-        return reply.status(500).send(); //todo fix 
+
+        throw error; 
     }
 
     return reply.status(201).send();
 };
-        

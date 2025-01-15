@@ -1,3 +1,4 @@
+import { Company } from "@prisma/client";
 import { companiesRepository } from "../repositories/companies-repository";
 import { CompanyAlreadyExistsError } from "./errors/company-already-exists-error";
 
@@ -8,9 +9,13 @@ interface CompanyInterface {
     status: string;
     plan: string;
 }
+
+interface RegisterCompany {
+    company: Company
+}
 export class RegisterCompanyUseCase {
     constructor(private companiesRepository: companiesRepository) {}
-    async handle({name, document, balance, status, plan}:CompanyInterface) {
+    async handle({name, document, balance, status, plan}:CompanyInterface) : Promise<RegisterCompany> {
 
         const companyWithSameDocument = await this.companiesRepository.findByDocument(document);
         const companyWithSameName= await this.companiesRepository.findByName(name);
@@ -28,6 +33,6 @@ export class RegisterCompanyUseCase {
             plan
         });
     
-        return company;
+        return {company};
     }
 }
